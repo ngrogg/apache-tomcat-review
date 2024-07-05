@@ -1,0 +1,709 @@
+[[index|back]]
+
+= Tomcat Intermediate =
+
+== Adding a user to Tomcat ==
+Make sure tomcat is running, bring it up in the browser
+Escalate to root
+Edit resource name under Realm
+conf/server.xml
+Copy and paste digest command to create hash
+copy output to conf/tomcat-users.xml
+Restart service
+Try server status and test user/password
+
+=== Learning Objectives ===
+==== Test to ensure you can access Tomcat ====
+It may take from 3 to 10 minutes after the hands-on lab has started before you can access the
+Tomcat server on Port 8080.
+
+To access the server, visit the external IP address and test in a web browser on port 8080.
+
+For example, if the IP address shown was 3.92.152.3 then you would put the following URL
+into your web browser:
+http://3.92.152.3:8080.
+
+==== Log into server console ====
+Ensure you can log into the provided server.
+
+==== Change the tomcat server so it uses digest authentication ====
+Change to the /usr/local/tomcat9 folder and edit the conf/server.xml:
+
+Find the following lines:
+
+ <Realm className="org.apache.catalina.realm.UserDatabaseRealm"
+             resourceName="UserDatabase"/>
+ </Realm>
+Replace them with the this:
+
+ <Realm className="org.apache.catalina.realm.UserDatabaseRealm"
+resourceName="UserDatabase">
+<CredentialHandler className="org.apache.catalina.realm.MessageDigestCredentialHandler" algorithm="sha-512" />
+</Realm>
+</Realm>
+Save the file and exit.
+
+==== Create sha-512 key w/ password ====
+From the tomcat folder, run the bin/digest command with appropriate options:
+
+If the password is PenguinTemp61 then the following command would generate the hash:
+./bin/digest.sh -a sha-512 -h org.apache.catalina.realm.MessageDigestCredentialHandler PenGuinTemp88
+Copy the generated hash to the clipboard. It will be used later.
+
+NOTE: Your password will be echoed back to you as part of the returned response.
+Don't copy the password or the :, just the long string of numbers.
+
+==== Change tomcate-users.xml file ====
+Edit the conf/tomcat-users.xml file and replace the plain text password with the hash
+you copied earlier.
+
+Be careful to only replace the old password that's inside the quotes ("").
+Leave the rest of the entry as is. If you have problems logging into the GUI after the
+change then check to make sure the formatting of that line of user information is correct.
+
+Since changes were made to the server.xml you will need to restart the Tomcat server:
+sudo systemctl restart tomcat
+
+==== Test that new user works ====
+Go to the Tomcat server in your web browser by going to the public IP address of the server and
+appending :8080 to it.
+
+Then go to the Manager App in the GUI. You should get a username and password prompt.
+Enter the username and password.
+
+You should be able to log in.
+
+If you are unable to log in. Troubleshoot the changes that were made.
+
+== Tomcat on a Different Port ==
+=== My Notes ===
+Escalate to root
+cd /usr/local/tomcat9
+vim conf/server.xml
+Find and edit Connector port
+Restart tomcat
+Try on port 8080 first, should fail
+Try it on port 8081
+
+=== Learning Objectives ===
+==== Test to Ensure you can access Tomcat ====
+It may take from 3 to 10 minutes after the hands-on lab has started before you can access the
+Tomcat server on Port 8080.
+
+To access the server, copy the external IP address and test in your browser by using this IP
+address and appending the :8080 to it.
+
+For example, if the IP address shown was 3.92.152.3 then you would put the following into your
+web browser:
+http://3.92.152.3:8080
+
+==== Log into server's console and change port to 8081 ====
+Note: Tomcat is installed under /usr/local/tomcat9
+
+You will log into the server's console (not the web GUI) and make the changes required for
+changing the port to 8081.
+
+The file you need to edit is /usr/local/tomcat9/conf/server.xml.
+
+Find the following portion:
+
+port="8080"
+Then replace it with the following:
+
+port="8081"
+Save the file and exit.
+
+==== Restart tomcat server and check for errors ====
+Restart the Tomcat server. This can be done with the following command:
+systemctl restart tomcat
+
+==== Connect to Tomcat GUI via new port ====
+Use a web browser and connect to your server on port 8081.
+If your server IP address was 3.93.186.99, then you would use the following
+(Note: Your IP address will likely be different):
+http://3.93.186.99:8081
+
+You should now see the Tomcat GUI. This shows your change was successful.
+
+== Change Tomcat for External Access ==
+=== My Notes ===
+escalate to root
+cd /usr/local/tomcat9/
+cd webapps
+cd host-manager
+cd META-INF
+vi context.xml
+Valve ClassName
+Line allow
+Has localhost in IPV4 and IPV6
+Add wildcard to end
+Restart tomcat
+Host manager in webpage
+Asks for username/password instead of 403 error
+
+=== Learning Objectives ===
+==== Test to ensure you can access Tomcat ====
+It may take from 3 to 10 minutes after the hands-on lab has started before you can access the
+Tomcat server on Port 8080.
+
+To access the server, use its external IP address (found on the hands-on lab overview page)
+in the URL bar of a web browser, then append :8080 to it.
+
+For example, if the server's external IP address was 3.92.152.3, then you would put the following
+into your web browser:
+http://3.92.152.3:8080
+
+Test to ensure you are unable to access the Host Manager App on the Tomcat GUI.
+
+==== Log into server and change config file to all internet access ====
+Note: Tomcat is installed under /usr/local/tomcat9.
+
+You will log into the server's console (not the web GUI) and make the changes required for opening
+up the access.
+
+The file you need to edit is /usr/local/tomcat9/webapps/host-manager/META-INF/context.xml.
+
+Find the line with this item:
+
+allow="127\.\d+\.\d+\.\d+|::1|0:0:0:0:0:0:0:1" />
+Replace it with the following:
+
+allow="127\.\d+\.\d+\.\d+|::1|0:0:0:0:0:0:0:1|.*" />
+Save the file and exit.
+
+==== Connect to Tomcat GUI====
+With a web browser, connect to your server on port 8080.
+If your server IP address was 3.93.186.99, then you would use the following
+(note that your IP Address will likely be different):
+http://3.93.186.99:8080
+
+You should now see the Tomcat GUI.
+
+==== Check that you are prompted for a password ====
+Go to the Host Manager App. You should be prompted for a password. If you get a password prompt,
+then the hands-on lab is a success.
+
+If you get a 403 Access Denied error, then you were not successful. Please troubleshoot to
+find the problem.
+
+== Set up Apache as a Proxy to Tomcat ==
+=== My Notes ===
+Escalate to root
+dnf install httpd
+systemctl enable httpd
+systemctl start httpd
+vim /etc/httpd/conf.d/tomcat_manager.conf
+Copy from Learning Objective
+Check if selinux is enforcing
+
+Edit selinux file
+vim /etc/selinux/config
+setsebool -P http_can_network_connect 1
+setsebool -P http_can_network_relay 1
+setsebool -P httpd_graceful_shutdown 1
+setsebool -P nis_enabled 1
+systemctl restart httpd
+systemctl status httpd
+Check on port 80
+Check for passwords
+
+=== Learning Objectives ===
+==== Test you can connect on port 8080 ====
+It may take from 3 to 10 minutes after the hands-on lab has started before you can access the
+Tomcat server on port 8080.
+
+To access the server, copy the external IP address (from the hands-on lab overview page) and test
+in your browser by using this IP address and appending :8080 to it.
+
+For example, if the IP address shown was 3.92.152.3 then you would put the following URL into your
+web browser:
+http://3.92.152.3:8080
+
+You should be able to see the GUI.
+
+==== Install Apache web server ====
+Log into the server's console and install the Apache web server:
+
+sudo dnf install httpd
+
+sudo systemctl enable httpd
+
+sudo systemctl start httpd
+Go to a browser and test that the Apache web server is working.
+You should see the default Apache web page.
+
+==== Configure Apache web server ====
+Create a virtual host entry inside an Apache configuration file. This file should be called tomcat_manager.conf:
+
+sudo vim /etc/httpd/conf.d/tomcat_manager.conf
+You can use the following as an example of what needs to be inside this configuration file:
+
+<VirtualHost *:80>
+    ServerAdmin root@localhost
+    ServerName myserversystem.mylabserver.com
+    DefaultType text/html
+    ProxyRequests on
+    ProxyPreserveHost On
+    ProxyPass / http://localhost:8080/
+    ProxyPassReverse / http://localhost:8080/
+</VirtualHost>
+
+==== Disable or alter SELinux ====
+SELinux is enabled on the hands-on lab server.
+You can choose to disable it or adjust it so it will allow the Apache web server to act as a proxy.
+
+To disable SELinux you would do the following:
+
+sudo setenforce permissive
+Then edit the SELinux configuration file to make the server permissive:
+
+sudo vim /etc/selinux/config
+Once in the editor, change this line:
+
+SELINUX=enforcing
+Make it permissive, instead of enforcing:
+
+SELINUX=permissive
+Then save the file.
+
+If you wish to keep SELinux enabled and allow it to permit the Apache web server to work as a
+proxy, you would run the following commands:
+
+sudo setsebool -P httpd_can_network_connect 1
+
+sudo setsebool -P httpd_can_network_relay 1
+
+sudo setsebool -P httpd_graceful_shutdown 1
+
+sudo setsebool -P nis_enabled 1
+
+==== Restart Apache web server ====
+Restart the Apache web server and check for errors:
+
+systemctl restart httpd
+If there are errors and Apache does not start, then troubleshoot those errors.
+
+==== Test you can connect on port 80 ====
+You should be able to see the Tomcat GUI being served out on port 80.
+
+If this does not work, or there is an error, troubleshoot the installation.
+
+== Load Balance a Tomcat Application ==
+=== My Notes ===
+Escalate to root
+Install httpd
+Enable and start service
+Configure apache to work as a load balancer
+/etc/httpd/httpd.conf
+Add entry above #Supplemental Configuration
+Replace BalancerMember with server IP
+Lab server can't access external IP
+Configure SELinux
+Bad practice to disable if no other service is running
+
+== Learning Objectives ===
+==== Test you can connect on port 8080 ====
+You will have three servers. The second and third are the Tomcat servers. It may take from
+3 to 10 minutes after the hands-on lab has started before you can access them.
+When enough time has elapsed, visit those two servers' public IP addresses on port
+8080 in a web browser.
+
+To access them, copy the external IP addresses and test in your browser by using the
+IP address and appending :8080 to it.
+
+For example, if an IP address shown was 3.92.152.3, then you would put the following into your
+web browser:
+http://3.92.152.3:8080
+
+You should see a Tomcat GUI at each server's public IP.
+
+==== Install Apache and configure as load balancer ====
+Log into the load balancer (via SSH) and install the Apache web server:
+
+sudo dnf install httpd
+
+sudo systemctl enable httpd
+
+sudo systemctl start httpd
+Go to a browser and test that the Apache web server is working by connecting to its IP address.
+You should see the default Apache web page. Now you need to configure the load balancer.
+
+Edit the Apache web server's configuration file.
+This can be found at /etc/httpd/conf/httpd.conf.
+If you used Vim, the command would be as follows.
+
+sudo vim /etc/httpd/conf/httpd.conf
+Jump to the end of the file, and edit above where it has the following entry:
+
+IncludeOptional conf.d/*.conf
+You can use the following as an example of what needs to be inside this configuration
+file (Note: Replace the TOMCAT1-INTERNAL-IP and TOMCAT2-INTERNAL-IP with the respective internal
+IP address of each Tomcat server):
+
+LoadModule proxy_module modules/mod_proxy.so
+LoadModule proxy_balancer_module modules/mod_proxy_balancer.so
+LoadModule proxy_http_module modules/mod_proxy_http.so
+
+<IfModule proxy_module>
+ProxyRequests on
+ProxyPass /examples balancer://mycluster stickysession=JSESSIONID
+ProxyPassReverse /examples balancer://mycluster stickysession=JSESSIONID
+
+<Proxy balancer://mycluster>
+BalancerMember http://TOMCAT1-INTERNAL-IP:8080/examples route=tomcat1
+BalancerMember http://TOMCAT2-INTERNAL-IP:8080/examples route=tomcat2
+</Proxy>
+
+</IfModule>
+
+==== Edit tomcat on both servers ====
+Log into one Tomcat server with SSH, not the Tomcat GUI.
+Edit server.xml to make the required changes:
+
+sudo vim /usr/local/tomcat9/conf/server.xml
+Change this line:
+
+<Engine name="Catalina" defaultHost="localhost" >
+Make it read:
+
+<Engine name="Catalina" defaultHost="localhost" jvmRoute="tomcat1">
+Save and exit, then restart Tomcat.
+
+systemctl restart tomcat
+
+Now log into the second Tomcat server, again with SSH (not the Tomcat GUI).
+Edit server.xml to make the required changes:
+
+sudo vim /usr/local/tomcat9/conf/server.xml
+Change this line:
+
+<Engine name="Catalina" defaultHost="localhost" >
+Make it read:
+
+<Engine name="Catalina" defaultHost="localhost" jvmRoute="tomcat2">
+Save and exit, then restart Tomcat:
+
+systemctl restart tomcat
+
+==== disable/change SELinux ====
+SELinux is enabled on the hands-on lab server.
+You can choose to disable it, or adjust it so it allows the Apache web server to act as
+a load balancer. Both ways are shown here:
+
+Disabling SELinux
+To Disable SELinux you would do the following:
+
+sudo setenforce permissive
+Then edit the SELinux config file to change the server to be permissive.
+
+sudo vim /etc/selinux/config
+Once in the editor, edit this line:
+
+SELINUX=enforcing
+Change enforcing to permissive, so that it looks like this:
+
+SELINUX=permissive
+Save the file, then use the setenforce command to change the running SELinux to be permissive.
+
+sudo setenforce permissive
+Editing SELinux
+If you wish to keep SELinux enabled, and allow it to permit Apache web server to work as a proxy,
+you would run the following commands:
+
+sudo setsebool -P httpd_can_network_connect 1
+
+sudo setsebool -P httpd_can_network_relay 1
+
+sudo setsebool -P httpd_graceful_shutdown 1
+
+sudo setsebool -P nis_enabled 1
+
+==== Restart apache server and confirm failover ====
+Restart the Apache web server and check for errors.
+If there are errors and Apache does not start, then troubleshoot those errors:
+
+sudo systemctl restart httpd
+You can test to see if the load balancer is working by going to the web page
+of the Apache web server. Then go to the URL that will be serving the load balanced
+application. That URL will be:
+
+http://LOAD-BALANCER-IP/examples/servlets/servlet/SessionExample
+
+If your Apache server's external IP address was 18.144.72.70,
+for example, you would go to this URL:
+http://18.144.72.70/examples/servlets/servlet/SessionExample
+
+Change the above IP address to be your own.
+
+You should be able to see a web page that shows something like the following.
+It will be slightly different in your own example:
+
+Sessions Example
+Session ID: 71DA102F3D1AF0818230595F801A93B7.tomcat1
+If you see something like this then it works.
+
+The previous task displayed a Session ID: that showed which Tomcat server you were connected to.
+Confirm the failover works by shutting down that Tomcat server (in the terminal you already
+have a session open in):
+
+sudo systemctl stop tomcat
+Then refresh your load balancer web page.
+You should now get connected to the second Tomcat server, and the application should show the
+other Tomcat server's Session ID.
+
+If this did not happen, but you still see the page, check to make sure you shutdown the correct
+Tomcat server. If you see an error page or not found, there is a problem and you will need
+to troubleshoot it.
+
+== Configure logging in Tomcat ==
+=== My Notes ===
+Escalate to root
+sudo su
+cd /usr/local/tomcat9
+typo with 'loogs' folder
+vim conf/logging.properties
+Find and replace %s/loogs/logs/
+systemctl restart tomcat
+rm -rf loogs
+Refresh window in browser
+log into manager
+Check that there are no new loogs
+
+=== Learning Objectives ===
+==== Examine logging.properties File ====
+The logging.properties file contents instruct Tomcat to log several items.
+For some reason not all the logs are being placed into the /usr/local/tomcat9/logs folder.
+
+If you examine the /usr/local/tomcat9 directory,
+you will see that an incorrect folder is receiving some of the logs.
+
+==== Fix incorrect entries ====
+Fix any entries in the logging.properties file so that all the logs are being placed
+into the /usr/local/tomcat9/logs folder.
+
+Do what is required to ensure new log entries are routed correctly.
+
+==== Test Tomcat is logging correctly ====
+Test and ensure that all logs are now going to the correct location.
+
+
+== Create Java Heap Dumps for Tomcat ==
+=== My Notes ===
+Escalate to root
+cd /usr/local/tomcat9
+cd bin
+vim setenv.sh
+Paste options
+Restart tomcat
+ps -ef | grep java, should see options in path
+pgrep java
+jmap -dump:live,format=b,file=heapcheck.hprof JAVA_PID
+mv heapcheck.hprog /home/user
+chown user:user heapcheck.hprog
+scp user@ip:./heapcheck.hprof .
+
+=== Learning Objectives ===
+==== Set option for a Heap Dump on out of memory error ====
+You will need to set a startup option for Tomcat so that it creates a heap dump on an
+Out of memory error.
+
+The file that is automatically created should go to /usr/local/tomcat9,
+and should be called heapcheck.hprof.
+
+These are the options to add to the Tomcat startup file (you may need to create the file):
+
+-XX:+HeapDumpOnOutOfMemoryError
+-XX:HeapDumpPath=PATH-AND-NAME-OF-FILE
+These should be set in a file called setenv.sh, in the bin folder,
+and they should be exported as CATALINA_OPTS.
+
+==== Create a manual heap dump ====
+Use the appropriate command to create a heap dump from live memory, and call it heapcheck.prof.
+
+Use the following options for the heap dump:
+
+Only live objects
+Binary format
+File = heapcheck.hprof
+You will need to be in the correct folder to be able to perform this successfully.
+
+If you get an error, you are not in the correct location to perform the task.
+
+==== Transfer heap dump from server to local computer ====
+You will need to do the tasks required to get the /usr/local/tomcat9/heapcheck.hprof
+file from the Tomcat folder to your own local computer.
+
+This may require copying or moving the file and changing its ownership or permissions.
+
+== Deploy a Tomcat Application using the GUI==
+=== My Notes ===
+Tomcat in browser
+Manager App
+
+=== Learning Objectives ===
+==== Deploy sample war file ====
+Log into the server's GUI, and deploy /files/version1/sample.war using the Manager.
+
+The file is located on the server. You will need to use the deploy section of the manager app
+from the server's Tomcat GUI.
+
+Context Path: /sample (note the leading /)
+
+War or directory path: file:/files/version1/sample.war
+
+Deploy.
+
+See it deployed.
+
+Test, show the page is working by going to the sample application.
+
+==== Deploy version 2 of sample war file ====
+Using the server's GUI and using the Manager, deploy /files/version2/sample.war.
+
+The file is located on the server. You will need to use the deploy section of the manager app
+from the server's Tomcat GUI. You should mark this as V2 in version.
+
+Context Path: /sample
+(note the leading /)
+
+Version (for parallel deployment): V2
+
+War or directory path: file:/files/version2/sample.war
+
+Deploy.
+
+You should be able to see it in the Applications section of the GUI.
+It should have the version number associated with it.
+
+==== Test that version 2 is shown ====
+Test the application is working by going to the sample web page.
+
+You should see text on the webpage showing it is Version 2.
+
+NOTE: You may have to refresh your browsers web page for it to show the new version.
+It may be cached by your browser.
+
+==== Undeploy original version ====
+Using the Manager GUI, you should be able to undeploy the original sample application.
+
+Undeploying it should not affect being able to access the new version of the application.
+
+== Set fixed Heap size in Tomcat ==
+=== My Notes ===
+sudo su
+cd /usr/local/tomcat9
+
+GUI
+Server Status
+Check memory
+
+CLI
+vim bin/setenv.sh
+export CATALINA_OPTS="-Xms1g -Xmx1g"
+restart server
+
+Check in GUI
+
+=== Learning Objectives ===
+==== Go to Tomcat GUI and check JVM Memory settings ====
+Go to the Tomcat GUI and check the server status page.
+You should take note of the memory settings that are originally applied to the Tomcat instance.
+
+==== Change Tomcat Server so it has min/max heap size ====
+The options to add to the Tomcat startup file (you may need to create the file) are these:
+
+-Xms1g
+-Xmx1g
+This should be set in a file under the bin folder called setenv.sh.
+
+These entries should be exported as CATALINA_OPTS.
+
+==== Restart tomcat server and check jvm memory ====
+Go to the Tomcat Manager GUI, then to the Server Status application and check the JVM memory.
+
+It should reflect the changes you made to the minimum and maximum settings,
+and be much higher than the original settings.
+
+== Backup and Restore Tomcat ==
+=== My Notes ===
+sudo su -
+cd /usr/local/tomcat9/
+cd webapps
+
+mkdir /backups
+cd /backups
+tar -czf tomcat-backup-DATE-.tar.gz /usr/local/tomcat9
+cd /usr/local/tomcat9
+tar -xzvf tomcat
+cd usr/local/tomcat9/webapps
+mv manager /usr/local/tomcat9/webapps
+
+=== Learning Objectives ===
+==== Back up your Tomcat App ====
+First create the folder /backups.
+
+Use the tar command (or whatever method you are comfortable with) and create a backup of the
+Tomcat application. You should put your backup in the /backups folder.
+
+Tomcat is located under /usr/local/tomcat9.
+
+==== Delete the manager application ====
+Your Tomcat installation is located under /usr/local/tomcat9.
+
+Delete the Manager application. It can be found under the /usr/local/tomcat9/webapps folder.
+
+Test to make sure the Tomcat application is broken by going to your Tomcat server's Manager
+address (something like http://3.92.152.3:8080/manager) via your web browser.
+
+==== Restore the entire manager folder ====
+Extract your backup file into the /backups folder.
+
+Put back the manager folder that was deleted earlier from the /usr/local/tomcat9/webapps folder.
+
+Move only that folder from /backups back into the Tomcat applications webapps folder.
+
+When completed, you should see the following under the /usr/local/tomcat9/webapps/ folder:
+
+docs
+examples
+host-manager
+manager
+ROOT
+Test to make sure you can log into the manager application.
+
+You should be able to see the Manager application when you go to your Tomcat server's Manager
+address (something like http://3.92.152.3:8080/manager) via your web browser.
+
+Again, the username and password are the same as for your lab username and password.
+
+== Enable Verbose Garbage Collection ==
+=== My Notes ===
+sudo su
+cd /usr/local/tomcat9
+vim bin/setenv.sh
+Add options from learning objective
+restart tomcat
+grep gc logs/catalina.out
+
+=== Learning Objectives ===
+==== Configure Tomcat to use Verbose and Parallel Garbage Collection ====
+You will need to set options for Tomcat's startup routine so that it uses verbose and parallel
+garbage collection.
+
+The options to add to the Tomcat startup file (you may need to create the file) are the following:
+
+Verbose garbage collection:
+-verbose:gc
+Parallel Garbage collection:
+-XX:-UseParallelGC
+These entries should be exported as CATALINA_OPTS.
+
+==== Restart Tomcat and Monitor logs for GC Messages ====
+Restart the Tomcat server.
+
+Check the Tomcat logs for entries relating to garbage collection.
+The log to look into is the catalina.out log.
+
+An example verbose log entry might look like the following:
+
+[2.536s][info][gc] GC(0) Pause Young (Allocation Failure) 66M->7M(1015M) 22.821ms

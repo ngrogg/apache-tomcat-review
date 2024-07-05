@@ -1,0 +1,423 @@
+[[index|back]]
+
+= Apache Learning Pathway =
+Assignment 1: Apache Web Services
+Section 1
+Need to be sure we have the ability to listen for HTTPD traffic
+Work with firewall
+firewall-cmd --permanent --add-service=http/https: on reboot persistent change to system
+firewall-cmd --reload
+systemctl enable httpd
+systemctl start httpd
+Check /var/www/html
+
+Section 2: The Apache configuration file
+/etc/httpd
+vim httpd.conf
+Listen, what port is it listening on? 80?
+Local host, Public IP ssh into, Private IP
+Usually two addresses
+If you have multiple IP addresses
+Dynamic Shared Objects (DSO)
+Include conf.modules.d/*.conf
+Modules to load
+User and group
+Default
+User apache
+group apache
+By default, defining a directory
+sets a configuration
+recursive
+/
+Not allowing any overrides
+Usually see other directories with other permissions or requirements
+Document root
+Document root, from a http config sets default directory that all website files and functions start within
+relative path
+more important
+all important contexts are set
+DocumentRoot /var/www/html
+If module says to only apply whatevers witihin this block if the condition is met
+if file exists
+server index
+A way if we see a website
+By default we get red hat test website, including directory module
+Serve this file if it's requested and it exists
+Files
+Used to deny
+files .htacess
+.htpasswd
+Error log, points to error log
+Log level warning
+exists as long as it's enabled
+Log file contains a host, a user, an ip
+Define own log format
+Simply change custom log directive
+Look at default character set
+utf-8
+Last thing
+IncludeOptional conf.d/*.conf
+
+Section 3: Configuring a private directory
+Add alias to /etc/hosts
+/etc/httpd/conf
+http.conf
+Change server admin name
+when making changes to main configuration, comment it out
+Compare original to new
+change to root@domain
+Servername is not set by default
+Change to servername
+Servername domain
+httpd -t
+Tell us if syntax is okay
+Choose a user to use this whttps://www.geek.com/news/damn-vulnerable-linux-the-most-vulnerable-and-exploitable-operating-system-ever-1270626/ith
+mkdir in var file system
+Change ownership of directory
+If we do an ll -Z on /var/www
+ll -Z /var/user1dir/
+New index.html
+semanage fcontext -at httpd_sys_content_t "/var/user1dir(/.*)?"
+Make sure all files and subdirectories inherit file context
+Set but not applied
+restorecon -Rv /var/userdir1/
+ll -Z /var/user1dir
+now have file context
+Should be able to configure webserver to serve up that private directory
+Change DocumentRoot
+DocumentRoot is no longer /var/www/html
+Set DocRoot to "/var"
+Give a directory that will restrict it to a user
+<Directory /var/user1dir>
+AllowOverride AuthConfig
+</Directory>
+Allows only user to access
+cd /var/user1dir
+Create .htaccess
+AuthType Basic
+AuthName "Password Protected Private Directory - Enter Login Credentials"
+AuthUserFile "/etc/httpd/conf/.userdb"
+RequireUser user1
+Save
+cd /etc/httpd/conf
+htpasswd -c
+truncates passwd files, be careful
+htpasswd -c .userdb user1
+Should not match login password
+Hash value for password
+Change group on user file to apache
+chgrp apache .userdb
+chmod 640 .userdb
+systemctl restart httpd
+users can create their own websites on one server
+
+Section 3: Group Manage content
+mkdir /var/private
+groupadd dbabminds
+usermod -G dbadmins user5 user6
+cat /etc/group | grep dbadmins
+Does directory have correct group ownership and group
+cd /var
+chgrp dbadmins private (-r for recrusive if needed)
+chmod 0771 private
+cd private
+Create index.html file
+Be aware of SELinux
+semanage fcontext -at httpd_sys_content_t "/var/private(/.*)?"
+All files and subdirectories
+restorecon -Rv /var/private
+check with ll -Z /var
+vi m httpd.conf
+<Directory /var/private>
+AllowOverride AuthConfig
+</Directory>
+httpd -t = apachectl configtest
+vim .htaccess
+AuthType Basic
+AuthName "Message"
+AuthUserFile "/etc/httpd/conf/.grouppassworddb"
+AuthGroupFile '/etc/httpd/conf/.groupdb"
+Require group dbadmins
+Apply group ownership to file
+vim .groupdb
+dbadmins: user5 user6
+chgroup apache .groupdb
+chown 0640 .groupdb
+httpasswd -c .grouppassworddb user5
+Enter password
+For user 6, avoid -c, truncates
+httpasswd .grouppassworddb user6
+Corrections:
+Correct directory is cp .htaccess /etc/httpd/conf
+Actually do chmod 0640 .groupdb
+chgrp apache .groupdb
+chown apache .groupdb
+systemctl restart httpd
+systemctl status httpd
+test config
+go to website
+
+Assignment 2: Deploying the red hat server
+Troubleshoot a failing virtual web host
+ssh user@ip
+Two main goals
+Go through the steps
+Check httpd/lynx is installed
+service is running
+default document works correctly (index)
+Enable site two
+Configure virtualhost directory
+Set up virtualhostCreate content
+add entry to host file
+Site one and site two
+
+Become root user
+Verify httpd and lynx are installed
+yum list httpd lynx
+yum -y install lynx
+Ensure httpd runing
+systemctl status httpd.service
+systemctl enable service --now
+lynx http://site1.linuxacademy.com
+
+Check other steps
+ls /var/www/site1
+index.html
+mkdir site2
+cd /etc/httpd/conf.d
+vi site1.conf
+<VirtualHost *:80>
+ServerName site1.linuxacademy.com
+ServerAlias site1
+DocumentRoot "/var/www/site1"
+</VirtualHost>
+sed 's/site1/site2/' site1.conf > site2.conf
+echo site2 > /var/www/site2/index.html
+vi /etc/hosts
+10.0.0.116 site1 site1.linuxacademy.com
+Replace 1's with 2's.
+Restart web server
+
+Assignment 3: Implement an Apache Web Server with PHP enabled
+Start taking a look at Apache web server
+Centos 7
+RPM: /etc/httpd
+Deb: /etc/apache
+Not tested on specific commands, tested on configurations
+go to conf directory
+ServerRoot "/etc/httpd"
+You can change that if you choose to
+Listen, port or IP to listen on
+DocumentRoot "/var/www/html"
+base directory where content is served from
+SELinux considerations
+LogLevel warn
+debug (high), emerg (low)
+<IfModule logio_module>
+LogFormat
+</IfModule>
+Directory sections
+<Directory "/var/www/cgi-bin">
+AllowOverride None
+Options None
+Require all granted
+</Directory>
+/var/log/httpd
+Default logging location
+Some of the basic directives
+Start service
+systemctl enable httpd
+chkconfig httpd on
+If there's content in html dir displays that
+test page shows that everything works
+install telnet and lynx
+good for testing things locally
+telnet localhost 80
+Install php
+cd modules
+cd conf.modules.d
+cat php.conf
+start php
+systemctl restart httpd
+
+create hello.php
+Enable perl and php
+
+Assignment 4: Change DocumentRoot of the Apache Web Server
+Change httpd file
+<DocumentRoot "/path/to/newfile">
+<Directory "/path/to/newfile">
+AllowOverride None
+Require all granted
+</Directory>
+Replace all instances of existing root
+Copy files to new place
+SELinux part
+Inform it of the changes
+chcon -v --type=httpd_sys_content_t /path/to/newfile
+chcon -v --type=httpd_sys_content_t /path/to/newfile/index.html
+restart httpd
+
+Assignment 5: Install Web Server and Perform the initial Firewall config
+Open ports 22 and 80
+install httpd, firewalld
+sudo firewall-cmd --add-port=22/tcp --permanent
+sudo firewall-cmd --add-port=80/tcp --permanent
+sudo firewall-cmd --reload
+Be careful, can lock yourself out of server
+enable httpd and firewalld
+Open browser tab, try to access IP
+
+Assignment 6: Apache Install and SSL Certificate Creation
+telnet localhost 80
+Unable to connect, apache not install
+install apache2 apache2-docs (documentation apache2-utils (allow modules) openssl (deb), openssl-server (rpm)
+Pulls down ssl cert apache module
+Create certificate, self signed
+/etc/apache2/ssl
+Holds certificates
+SSL command to generate certificate
+Self signed, we are signing cert as we are who we are
+Generate key and cert. paid give you cert
+sudo openssl req -x509 -days 365 -newkey rsa:2048 -keyout /etc/apache2/ssl/apache.key -out /etc/apache2/ssl/apache.cert
+Key is created.
+Fill in key
+cd /etc/apache2 (deb) /etc/httpd/conf.d (rpm)
+cd mods-available (deb)
+ssl conf and load file
+enable the module
+sudo a2enmod ssl
+restart apache (no vhosts yet)
+edit sites-available/default-ssl.conf
+<VirtualHost _default_ 443>
+SSLEngine on
+SSLCertificateFile /etc/apache2/ssl/apache.cert
+SSLCertificateKey /etc/apache2/ssl/apache.key
+May need to uncomment out SSLCertificateChainFile
+sudo a2ensite default-ssl.conf
+sudo service apache2 restart
+telnet localhost 80
+Get a response
+telnet localhost 443
+get a response
+curl -k https://ip
+Default page
+
+Assignment 7: Hiding Apache Data and Implementing Safeguards
+/etc/httpd/conf
+Header edit Set-Cookie ^(.*)$ $1;HttpOnly;Secure
+Header set X-XSS-Protection "1; mode-block"
+Header always append X-Frame-Options DENY
+DDOS protection mechanisms
+LimitRequestBody 500,000,000
+TimeOut
+MaxClients
+KeepAliveTimeout
+LimitRequestFields
+LimitRequestFieldSize
+Values are not defacto
+Prevent Server side includes
+Go to <Directory /path>
+RewriteEngine On
+RewriteCond %{THE_REQUEST} !HTTP/1.1$
+RewriteTule .* -[F]
+<LimitExcept POST GET>
+Deny from all
+</LimitExcept>
+Remove Options Indexes FollowSymlinks
+Options -Includes
+Options -ExecCGI
+Options -Indexes
+</Directory>
+At bottom
+FileEtag None
+ServerSignature Off
+ServerTokens Prod
+Restart httpd
+Some rules are a per directory basis
+
+Assignment 8: Configure a back end for a web application
+Firewalld is installed an running, ports 80 and 22 are open
+Github files are already installed and unpacked
+Front end is ready to go
+mkdir Backend
+mv app.py to Backend
+Install prerequisites, Python 3.6, python-dev, pip, flask, tcpdump, psutil
+65535/tcp in firewall permanent rule
+Reload firewall
+Create systemd file for backend, flaskapp.service
+/etc/systemd/system
+[Unit]
+Description
+Documentation
+Requires
+[Service]
+ExecStart=/path/to/app
+ExecReload
+OOMScoreAdjust
+[Install]
+Alias
+WantedBy
+Restart daemons
+Enable flaskapp
+http://www.IP:65535/log_messages
+yum install epel-release
+yum install 'Development-tools'
+ln -s /usr/local/bin/pip3 /usr/bin/pip3
+pip3 install Flask
+firewall-cmd --permanent --add-port=65535/tcp
+firewall-cmd --reload
+flaskapp.service
+[Unit]
+Description=API_Backend
+After=network.target
+[Service]
+User=root
+Group=root
+WorkingDirectory=/path
+Environment=FLASK_ENV=development
+Environmnet=FLASK_APP=/path/to/main
+ExecStart=/usr/local/bin/flask run -h 0.0.0.0 -p 65535
+Restart=always
+[Install]
+WantedBy=multi-user.target
+systemctl daemon-reload
+systemctl start flaskapp
+systemctl enable flaskapp
+/var/www/html/index.html
+set <script base_url> to actual IP
+
+Assignment 9: Configure Mod Evasive
+install, load and configure Mod_Evasive
+yum install mod_evasive
+/httpd.conf
+IncludeOptional conf.d/*.conf
+look for mod_evasive.conf
+LoadModule evasive20_module modules/mod_evasive24.so
+<IfModule mod_evasive.c>
+Reduce DOSSiteCount, too low blocks users
+Restart httpd
+
+Assignment 10: Configure ModSecurity
+Install Mod_security
+Load Mod_security
+Configure Mode_Security to use OWASP Rules
+yum install mod_security
+mkdir /etc/httpd/crs
+clone SpiderLabs/owasp-modsecurity-crs.git
+Apache config
+<IfModule security2_module>
+Include /path/to/crs-setup.conf
+Include /path to rules/*.conf
+</IfModule>
+Restart httpd
+
+Assignment 11: The Lamp stack with PHPMyAdmin
+Just install phpmyadmin, you already know how to install LAMP
+
+Assignment 12: 208.2 Apache Configuration for HTTPS (SSL and SNI)
+Can only generate  CSR for valid domains
+SNI: Server Name Identification
+Allows the web browser to include the requested hostname as part of the SSL
+handshake
+If you need to implement SSL in a virtual host environment you should consult Apache Docs

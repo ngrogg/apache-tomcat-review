@@ -1,0 +1,723 @@
+[[index|back]]
+
+= Tomcat Administration Deep Dive =
+
+== What is Tomcat ==
+=== What is Tomcat ===
+Pure Java http web server environment
+Java servlet
+Application
+Add dynamic content to a web server using the Java platform
+Java software component that extends the capabilities of the server
+
+JavaServer Pages (jsp)
+High level abstraction of Java Servlets
+Translated into servlets at runtime
+cached and reused at run time
+based on HTML, XML or other types
+Needs tomcat to run
+Must be executed within a JVM
+
+Java Expression Language
+SPEL (Simplest Possible Expression Langauge)
+Designed to embed expressions into web pages
+
+Websocket Technologies
+communications protocol which provides full-duplex communication over a single TCP
+connection
+not the same as HTTP
+Enables interaction between a web browser and web server
+Good for low-latency apps
+
+Tomcat is Open Source
+Licensed under Apache license
+No royalties
+
+=== The Services Tomcat Provides ===
+Tomcat is an open source web application server
+web application server as it only works with .war files
+Executes servlets and renders webpage
+Won't run .ear files out of the box
+
+Not Java EE certified
+Smaller apps work, others require the full use of a java Platform Enterprise Edition app server
+Set of specifications
+Not all technologies are in Tomcat out of the box
+
+=== WAR Files Only, please ===
+Tomcat uses war files (Web Application Resource), not ear files (Enterprise Application aRchive)
+not designed for java applications
+If java apps are needed, Jboss is a better option
+also has a servlet container
+TomEE can deploy ear files
+
+War File Contents
+WEB-INF directory contains web.xml file, web apps structure
+
+web.xml file not strictly necessary if app is only serving JSP files
+
+web.xml is also used to define certain variables for reference inside the servlets and it defines
+environmental dependencies, such as sending an email
+
+Advantages of war files
+easy testing and deployment
+can set environment specific variables with external properties files
+
+Disadvantages
+Changes must be repackaged and extracted
+
+=== Tomcat and it's uses ===
+Web server and servlet system
+Required if you want to run java web apps
+can run multiple servlets on the same servlet
+Different servlets can be managed seperately
+
+Easy to install
+Don't have to use as front end
+Can use Apache with mod_proxy
+Can configure SSL/TLS with Tomcat
+Only needed if it's a stand-alone web server
+
+Uses port 8080 by default
+Can be used as a service
+Requires Java
+
+Web based admin console
+http://localhost:8080/manager
+Need to add users before accessing the admin features
+Deploy by placing .war file into webapps folder
+
+=== Tomcat day to day ===
+Monitor the existing Tomcat Servers:
+Memory use
+Java resource use
+Disk Space
+Logs for errors or issues
+
+Day to day managing of the applications
+Adding new war files
+Changing or removing .war files
+
+Depending on your situation, you may need to use Git or some other method to pull
+updated app from your repo
+
+
+Updating information for databases or shared resources
+Updating the JDBC framework
+User and role management
+Locally via configuration files
+Via a realm (database of usernames,passwords)
+Other (plugins or code changes)
+
+Automating tasks
+Scripting or coding for repetitive tasks
+Continuous integration, such as Jenkins
+
+Optimizing environment
+Adjust parameters for open files
+Garbage collection
+Management of memory
+
+=== Comparisons between java application servers ===
+JBoss EAP, subscription based EE app server
+Free for dev environment
+Free community edition called wildfly
+
+WebLogic
+Developed by Oracle
+Closed source
+Used in large enterprise environments
+Integrates well with other Oracle products
+Difficult to setup and maintain
+
+Tomcat
+open source
+only works with war files out of the box
+can run ear files
+Executes java servlets
+not Java EE certified
+Does implement JSP and Servlet
+low cost
+popular
+mature and well documented
+
+== Install and Configure Tomcat ==
+=== Installing on linux ===
+In this lesson we will install Tomcat 9 onto Red Hat Enterprise 8.
+
+These are the commands we'll use for this lesson:
+
+First we become the root user and check and install updates:
+
+sudo su -
+dnf update
+Next we install java-11-openjdk-devel package:
+
+dnf install java-11-openjdk-devel
+We check the version of Java:
+
+java --version
+Then we go to a webpage to get the latest version of Tomcat 9. We copy the link to the clipboard:
+https://tomcat.apache.org/download-90.cgi
+
+We will paste that later when we use wget to obtain the Tomcat install files.
+
+Before we can get them, we need to ensure we have wget installed. We might as well also install
+some other software that will get used later. (Note: we use yum install here but could also use
+dnf install):
+
+yum install wget tree vim
+wget {PASTE IN HERE THE DOWNLOAD LINK FROM THE TOMCAT PAGE}
+Note: The URL I use for the video is a temporary that may not be available.
+Below is a link to a mirror that should be ok.
+It is preferable to use the link copied to the clipboard earlier:
+
+wget http://mirror.cogentco.com/pub/apache/tomcat/tomcat-9/v9.0.31/bin/apache-tomcat-9.0.31.tar.gz
+Now we go to the folder we want to put Tomcat into:
+
+cd /usr/local
+Extract the downloaded file to the current location. Note:
+Your filename may be slightly different than what I have here. That's ok:
+
+tar -xvf /root/apache-tomcat-9.0.31.tar.gz
+Now we use the mv command to change the folder name.
+Note: Your filename may be slightly different than what I have here. That's ok:
+
+mv apache-tomcat-9.0.31 tomcat9
+Now we add the tomcat user as a system account. This means we don't need to do anything special for
+SELinux, as the system account will allow things to just work as we require.
+If you don't use a system account, you may need to manually fix things up for use with SELinux:
+
+useradd -r tomcat
+Now we need to change the permissions of the tomcat folder so the tomcat user can use it:
+
+chown -R tomcat:tomcat /usr/local/tomcat9
+Now we need to create the tomcat service. We use Vim to edit the file, but feel free to use
+the editor of your own choice:
+
+vim /etc/systemd/system/tomcat.service
+Add these contents to the file:
+
+[Unit]
+Description=Apache Tomcat
+After=syslog.target network.target
+
+[Service]
+Type=forking
+User=tomcat
+Group=tomcat
+
+Environment=CATALINA_PID=/usr/local/tomcat9/temp/tomcat.pid
+Environment=CATALINA_HOME=/usr/local/tomcat9
+Environment=CATALINA_BASE=/usr/local/tomcat9
+
+ExecStart=/usr/local/tomcat9/bin/catalina.sh start
+ExecStop=/usr/local/tomcat9/bin/catalina.sh stop
+
+RestartSec=12
+Restart=always
+[Install]
+WantedBy=multi-user.target
+Now we get the system to recognize a new service is available:
+
+systemctl daemon-reload
+Now let's start the service, then enable it to autostart and check its status:
+
+systemctl start tomcat.service
+systemctl enable tomcat.service
+systemctl status tomcat.service
+Check that Tomcat works by going to your server's web page on the port 8080:
+
+http://YOURSERVERIP:8080
+Let's add a user for the web console:
+
+cd /usr/local/tomcat9/
+vim conf/tomcat-users.xml
+Go to the bottom of the file, and put the following just before the <\/tomcat-users> end block.
+Don't forget to change the YOURPASSWORDHERE to be your own password:
+
+<role rolename="admin-gui,manager-gui"/>
+<user username="admin" password="YOURPASSWORDHERE" roles="admin-gui,manager-gui"/>
+Now you need to allow access to the management web pages from the internet. If you know what you're
+doing, you could just allow access from your own IP address, but that is not covered in these
+written instructions:
+
+vim webapps/manager/META-INF/context.xml
+Change the following line:
+
+allow="127\.\d+\.\d+\.\d+|::1|0:0:0:0:0:0:0:1" />
+It should read:
+
+allow="127\.\d+\.\d+\.\d+|::1|0:0:0:0:0:0:0:1 |.*" />
+Now restart Tomcat:
+
+systemctl restart tomcat
+Now go to your Tomcat web console and use the user you created to log in.
+
+You now have a working Tomcat installation.
+
+Thank you.
+
+=== Installing on Windows 2019 server ===
+In this lesson we will discuss and show how to install Tomcat 9 onto Windows 2019 Server.
+
+If you follow along on your own server then these links may be of use and are mentioned in
+the lesson.
+
+Apache Tomcat install notes:
+
+https://tomcat.apache.org/tomcat-9.0-doc/setup.html#Windows
+
+Apache Tomcat download page:
+
+https://tomcat.apache.org/download-90.cgi
+
+If you need to download Java, then once you have registered with Oracle you can download the
+software for Windows from this location:
+
+https://www.oracle.com/java/technologies/javase-jdk11-downloads.html
+
+Note: The URLs shown here are valid at the time of course creation, but may change over time.
+A search of the internet should show you updated links if this occurs.
+
+=== The Configuration Files ===
+In this lesson we will discuss these files located in the ./conf folder:
+catalina.policy catalina.properties context.xml jaspic-providers.xml logging-properties
+
+We also talk about Catalina, and why you see so many references to it.
+
+Note: There are other lessons for the server.xml, web.xml, and tomcat-users.xml files,
+so we don't go into detail about them here.
+
+=== Adding Users to Tomcat ===
+tomcat-users.xml files
+Refer to lab from intermediate
+
+In this lesson we talk about adding users to a Tomcat instance.
+
+We discuss the default of plain text.
+Then we'll look at roles, seeing how to do some tasks using curl,
+and passing the correct parameters to the server.
+
+We also discuss and see how to use digest authentication,
+creating a SHA-512 key to look at how that is used.
+
+Finally we discuss some of the other methods that can be used to authenticate your Tomcat Server.
+
+A good resource can be found on the Tomcat Documentation page.
+This URL discusses the text manager and how to use it:
+https://tomcat.apache.org/tomcat-9.0-doc/host-manager-howto.html
+
+This URL has more information about realms and using tools such as
+LDAP: https://tomcat.apache.org/tomcat-9.0-doc/realm-howto.html
+
+=== The server.xml file ===
+In this lesson we discuss the server.xml file and its elements.
+
+Changing this file can help you to fine tune your Tomcat Server.
+
+We'll look at:
+
+Top level elements
+Containers
+Connectors
+Nested components
+Cluster Elements
+
+Tomcat's main configuration file
+<Server> is the root element of the entire configuration file
+<Service> represents a group of Connectors that is associated with an Engine
+
+=== The web.xml file ===
+In this lesson we discuss the ./conf/web.xml file. We briefly touch on the application's web.xml also and discuss when to use one or the other.
+
+Different than WEB-INF/web-xml, those are specific to those applications.
+httpd conf file vs webpage specific conf files
+
+Declares default servlet and JSP servlets
+All JSP requests will return as unparsed source code
+Don't remove conf file
+
+Application web.xml, you could remove them for applications and define everything in main
+Messy, could affect other sites and changes need entire server rebooted
+Better to use web.xml for each app.
+<!-- --> XML comment
+
+=== Remote Access to the Tomcat Manager GUI ===
+Web GUI
+access-controlled by default
+Have to access by localhost
+controlled by username/password combinations
+IP
+Alternatives such as IPTables or firewalld
+External firewalls or load balances
+User Access conf/tomcat-users.xml
+Remote access controlled by META-INF/context.xml
+Valve className
+Used to configure remote access to Tomcat Manager GUI
+Adjust regex in allow
+
+Remote Address Valve by IP
+Remote Host by hostname
+Remote CIDR by IP range
+
+=== Changing the Port for Tomcat ===
+Tomcat default port is 8080
+conf/server.xml
+Restart tomcat
+Tomcat does not make it obvious if port is in use
+grep logs for initialization issue
+Be aware of ports
+
+=== Apache as a proxy to Tomcat ===
+In this lesson we discuss using a proxy as a front end to Tomcat.
+We talk about several options available and why you might use them.
+
+We discuss how to set up and use Apache web server as a proxy or front end to Tomcat.
+
+To set up Apache as a proxy, we edit the following file:
+
+/etc/httpd/conf.d/tomcat_manager.conf
+
+And we place this inside it:
+
+<VirtualHost *:80>
+ServerAdmin root@localhost
+ServerName kevinpjames5c.mylabserver.com
+DefaultType text/html
+ProxyRequests off
+ProxyPreserveHost On
+ProxyPass / http://localhost:8080/
+ProxyPassReverse / http://localhost:8080/
+</VirtualHost>
+
+We also modify the following file:
+
+/usr/local/tomcat9/conf/server.xml
+
+This text will be changed:
+
+<Connector port="8080" protocol="HTTP/1.1"
+connectionTimeout="20000"
+redirectPort="8443" />
+
+It looks like the following when we're done:
+
+<Connector port="8080" proxyName="myserver.mycompany.com" proxyPort="80" protocol="HTTP/1.1"
+connectionTimeout="20000"
+redirectPort="8443" />
+
+If you have SELinux running on the server,
+it needs to be set to allow this proxy to take place.
+We make the following changes to allow this:
+
+setsebool -P httpd_can_network_connect 1
+setsebool -P httpd_can_network_relay 1
+setsebool -P httpd_graceful_shutdown 1
+setsebool -P nis_enabled 1
+
+Then we restart the Apache web server and test to see if it
+works by going to our server on port 80.
+
+=== Load Balancing ===
+In this lesson we discuss load balancing, and why you might need it.
+We'll look at using the Apache web server as a load balancer front end
+to two Tomcat instances.
+
+For those who wish to follow along, this lesson involves three servers in the
+Cloud Playground, one running the Apache web server, and two running Tomcat.
+The latter two have been configured according to how the lessons on setting up
+Tomcat specified.
+
+Note that all of the following tasks are performed as the root user.
+Install Apache
+
+On what will be the load balancer, we need to install the Apache web server.
+
+[root@apache-server ]# dnf -y install httpd vim
+
+[root@apache-server ]# systemctl enable httpd
+[root@apache-server ]# systemctl start httpd
+[root@apache-server ]# systemctl status httpd
+
+You should then test to ensure you can see the default Apache web page on that server.
+
+Then we need to configure the Apache web server as a load balancer,
+so we have to add some modules and set up the balancer.
+
+Edit the /etc/httpd/conf/httpd.conf file, then go to the bottom of it and add the
+following before the line that says IncludeOptional conf.d/*.conf
+
+LoadModule proxy_module modules/mod_proxy.so
+LoadModule proxy_balancer_module modules/mod_proxy_balancer.so
+LoadModule proxy_http_module modules/mod_proxy_http.so
+
+<IfModule proxy_module>
+ProxyRequests on
+ProxyPass /examples balancer://mycluster stickysession=JSESSIONID
+ProxyPassReverse /examples balancer://mycluster stickysession=JSESSIONID
+
+<Proxy balancer://mycluster>
+BalancerMember http://YOUR_OWN_IP_1:8080/examples route=tomcat1
+BalancerMember http://YOUR_OWN_IP_2:8080/examples route=tomcat2
+</Proxy>
+
+</IfModule>
+
+Don't forget to set the IP address to your own server's internal IP address.
+Configuring the Tomcat Servers
+
+Go to your first Tomcat server and either perform the tasks as the root user,
+or preface them with the sudo command:
+
+[root@tomcat1 ]# cd /usr/local/tomcat6
+
+Edit conf/server.xml.
+
+Change this line of text:
+
+<Engine name="Catalina" defaultHost="localhost" >
+
+It should read:
+
+<Engine name="Catalina" defaultHost="localhost" jvmRoute="tomcat1">
+
+Save the file, and restart the Tomcat server:
+
+[root@tomcat1 ]# systemctl restart tomcat
+
+Now go to your second Tomcat server and either perform the tasks as the root user,
+or preface them with the sudo command:
+
+[root@tomcat2 ]# cd /usr/local/tomcat6
+
+Edit conf/server.xml.
+
+Change this line of text:
+
+<Engine name="Catalina" defaultHost="localhost" >
+
+It should read:
+
+<Engine name="Catalina" defaultHost="localhost" jvmRoute="tomcat2">
+
+Save the file and restart Tomcat:
+
+[root@tomcat1 ]# systemctl restart tomcat
+
+Go back to the Apache web server.
+
+If you have SELinux running on the server, it needs to be set to allow this proxy to
+take place. We make the following changes to allow this, or disable SELinux:
+
+[root@apache-server ]# setsebool -P httpd_can_network_connect 1
+[root@apache-server ]# setsebool -P httpd_can_network_relay 1
+[root@apache-server ]# setsebool -P httpd_graceful_shutdown 1
+[root@apache-server ]# setsebool -P nis_enabled 1
+
+Then we restart the Apache web server again.
+
+Go to the web page for this server, and paste in the following URL.
+Note that you will need to put your own IP address where it says YOUR_OWN_IP.
+
+http://YOUR_OWN_IP/examples/servlets/servlet/SessionExample
+
+You should be able to see the sample application
+(provided the example applications have been installed with the default installation).
+
+== The Tomcat Manager GUI ==
+=== Server Status ===
+Tomcat GUI
+shown on port 8080
+access controlled by conf/tomcat-users.xml
+No internet connection required for local links
+
+Default apps
+Server status - Information about the tomcat instance
+Links to other useful apps
+info regarding JVM
+info regarding connection to server
+
+=== Manager App ===
+Manager App - manage apps
+Gives user control over apps on server
+
+Message: system messages
+Applications: Deployed applications
+Deploy: Deploy an application
+Configuration: for TLS configuration files
+Diagnostics: Simple application diagnostics
+Server info: Basic server information
+
+=== Host Manager ===
+Host Manager - Manage virtual hosts within Tomcat
+
+Help manage virtual hostnames
+Can start and stop applications by virtualhost
+Script commands:
+{server}:{port}/host-manager/text
+vhosts can be added by editing server.xml directly
+
+persist, want changes to save over a reboot
+To make use of persistence (being able to save additions you make via the GUI)
+you need to add some code to your server.xml file.
+Go to your server and edit the server.xml file (it is inside the ./conf folder).
+Find the section of the file that has the Listener classes.
+Add the following change after the other Listeners:
+
+ <!-- Enable Persistence -->
+   <Listener className="org.apache.catalina.storeconfig.StoreConfigLifecycleListener"/>
+Save the file and restart Tomcat.
+
+== Application Management ==
+=== Virtual Host Management Non Gui ===
+In this lesson we discuss adding a virtual host without using the Tomcat Management GUI.
+
+You can use virtual host's to map a host name to your Tomcat Applications.
+This allows you to connect to them as a server or hostname, instead of via the Tomcat hostname.
+
+This is the code that is used in this lesson:
+
+<Host name="test.acloud.guru"  appBase="test"
+    unpackWARs="true" autoDeploy="true">
+
+<Valve className="org.apache.catalina.valves.AccessLogValve" directory="logs"
+       prefix="test_access_log" suffix=".txt"
+       pattern="%h %l %u %t &quot;%r&quot; %s %b" />
+
+</Host>
+To understand how to use this code, please follow along in the lesson.
+
+Hostnames map a hostname to an application
+
+=== WAR Files ===
+Can uncompress manually
+Uncompress with jar -xvf FILENAME.war
+Compress with jar -cvf FILENAME.war ./
+Advantages:
+Easy to deploye
+All java EE containers can use t hem
+Get resources via properties files
+
+Disadvantages
+If you make changes to the contents the files must be repackaged and re-deployed
+
+=== Deploy via the Web GUI ===
+Fill in info and press deploy
+
+Benefits
+More options
+context path
+Versioning
+
+Click undeploy on old one
+
+=== Deploy via the CLI ===
+unpackWars="true"
+autoDeploy="true"
+appBase="webapps"
+^^ auto deploy war files in that location
+
+Remove war file and it will automatically undeploy the app
+move new war file to old war file location to re-deploy new war file automatically
+
+=== Static vs Dynamic Deployment ===
+Deployment means to install a web application onto the tomcat server
+Statically app is set up before tomcat is started
+Dynamically changing app while tomcat is running
+
+Other methods
+such as Maven or the Tomcat Client Deployer
+
+=== Backups ===
+Store war files somewhere
+Manual restoration such as ansible
+Automation process
+Backup what's not under source control, such as logs
+Back up conf and webapps folders
+Regular testing of backup process helps catch problems
+Make a backups folder
+tar -czf tomcat-backup-date-.tar.gz /usr/local/tomcat9
+
+== Troubleshooting and tuning ==
+=== Diagnostics ===
+Tomcat logs
+virtualhost specific,
+Do other vhosts work?
+Is it new or has it been around for a while?
+Is it a single application or the whole system
+
+Check server status page
+
+=== Logging ===
+Tomcat uses JULI for its logging
+catalina.out, console output
+host-manager.DATE log for host manager application
+localhost.DATE application context log
+localhost_access_log.DATE tomcate server access
+Manger.DATE Manager GUI accesses
+
+=== Garbage Collection ===
+Provided by Java
+Tune use of resources
+Destroys old objects
+Frees up memory
+
+Full Garbage colection needs jvm to be paused
+Full GC triggered is app has no reference to it
+Logs are a good place to check to see if it's occuring
+catalina.out
+
+look at the entries required in the bin/setenv.sh file.
+
+=== JVM Tuning ===
+setenv.sh under bin folder
+setenv.bat on Windows
+optional file
+
+Turn on garbage collection
+setenv.sh
+export CATALINA_OPTS
+Restart tomcat
+Remove verbose gc after tuning
+
+Find leaks will trigger full garbage collection
+
+=== ULimits and Fixed Heap Size ===
+ULimits are outside of Java
+Related to Linux OS resources
+Control over resources related to the shell
+Change for user, group and can use wildcards
+core limits file size
+data max data size
+fsize max file size
+memlock max locked in memory
+nofile max num open files
+rss max resident set size
+stack maximum stack size
+cpu max cpu time
+nproc max num processes
+
+=== Using JConsole ===
+Enable in bin/setenv.sh
+/export CATALINA_OPTS="-DCOM.sun.management.jmxremote \
+-Dcom.sun.management.jmxremote.port.=9000 \
+-Dcom.sun.management.jmxremote.ssl=false \
+-Dcom.sun.management.jmxremote.authenticate=false"
+
+restart tomcat
+
+jconsole localhost:9000
+
+=== Create and analyze Java Heap Dumps ===
+Dump of heap memory
+useful for diagnosing memory issues
+Can manually trigger a heap dump
+use JDK tool jmap
+jmap -dump:live,format=b,file=heapcheck.hprof TOMCAT_PID
+
+trigger for startup parameter
+-XX:+HeapDumpOnOutOfMemoryError
+-XX:HeapDumpPath=/usr/local/tomcat/temp/heapcheck.hprof
+
+pgrep for java

@@ -1,0 +1,317 @@
+[[index|back]]
+
+= Tomcat Intro =
+== Deploy a Tomcat Application Dynamically ==
+Test tomcat is running by checking on port 8080
+Deploy sample.war
+cd /usr/local/tomcat9/
+mv war file
+Second application version 2
+mv /files/version2/sample.war ./
+overwrite sample.war
+
+=== Linux Academy Learning Objectives ===
+Use the Tomcat server's public IP address and port 8080 to connect to the Tomcat GUI and log in.
+The username and password to use are the same as what's provided for CLI access.
+
+To access the server, visit the external IP address provided in the hands-on lab page,
+and append :8080 to it.
+
+For example, if an IP address shown was 3.92.152.3, then you would put the following into your web
+browser: http://3.92.152.3:8080
+
+You should see the GUI. This is to test that the Tomcat is up and running and the lab is ready
+for you to perform the tasks.
+
+Note: It may take from 3 to 10 mins after the Hands-On Lab has started before you can access the
+Tomcat servers on Port 8080.
+
+You must deploy /files/version1/sample.war via the CLI, not the GUI.
+
+Once the application is in the correct place, check to make sure it is deployed.
+Check to see if the application has been exploded in the folder.
+
+Go to the application via a browser and make sure it is working.
+It can be found by visiting the server's external IP address with :8080/sample appended to the URL.
+
+For example, if the IP address shown for the lab was 3.92.152.3 then you would put the following
+into your web browser: http://3.92.152.3:8080/sample
+
+You must deploy Version 2 of the application (located in /files/version2/sample.war) via the CLI,
+not the GUI.
+
+Once the application is in the correct place, check to make sure it deployed.
+
+Go to the application via a browser and make sure it is working.
+It can be found by going to the server's external IP address with :8080/sample appended to the URL.
+
+For example, if the IP address shown for the lab was 3.92.152.3
+then you would put the following into your web browser: http://3.92.152.3:8080/sample
+
+You should see text on the webpage showing that it is Version 2.
+If the webpage is unchanged, troubleshoot the issue.
+
+== Deploy a Tomcat Application Statically ==
+
+=== My Notes ===
+Go to  IP:8080
+Go to webapps folder
+Stop tomcat
+Copy version 1 to folder
+start tomcat
+
+=== Linux Academy Learning Objectives ===
+Connect to the Tomcat GUI and log in.
+To access the server, visit the external IP address provided in the hands-on lab page,
+and append :8080 to it.
+
+For example, if an IP address shown was 3.92.152.3,
+then you would put the following into your web browser:
+
+http://3.92.152.3:8080
+
+You should see the GUI.
+
+Note: It may take from 3 to 10 mins after the hands-on lab has started before you can access
+the Tomcat server on port 8080.
+
+You must deploy the sample.war via the CLI.
+To complete this task you are not to use the GUI and you must stop Tomcat first.
+
+The file is located here: /files/version1/sample.war.
+
+Once the application is in the correct place, start the Tomcat server.
+
+Go to the application via a browser and test to see if it's working.
+It can be found by going to the server's external IP address with :8080/sample
+at the end of the URL.
+
+For example, if the IP address shown for the lab was 3.92.152.3 then you would put
+the following into your web browser: http://3.92.152.3:8080/sample
+
+You must deploy the sample.war via the CLI. To complete this task you are not to use the GUI and
+you must stop Tomcat first.
+
+The file is located here: /files/version2/sample.war.
+
+Once the file is in place restart Tomcat.
+
+Go to the application via a browser and test to see if it's working.
+It can be found by going to the server's external IP address with :8080/sample
+at the end of the URL.
+
+For example, if the IP address shown for the lab was 3.92.152.3 then you would put
+the following into your web browser: http://3.92.152.3:8080/sample
+
+The application will have different text than the original application. It shows version 2.
+
+== Deploy a Tomcat Application using the CLI ==
+
+=== My Notes ===
+Escalate to root
+cd /files
+Find site versions
+cd /usr/local/tomcat
+Where installation is
+cd webapps
+Default folder for deploying applications
+mv /files/version1/sample.war webapps/
+cd webapps
+
+Go to web browser
+Test to confirm file has been deployed.
+
+mv /files/version2/sample.war webapps
+
+=== Linux Academy Learning Objectives ===
+Connect to the Tomcat GUI and log in. To access the server, visit the external IP address
+provided in the hands-on lab page, and append :8080 to it.
+
+For example, if an IP address shown was 3.92.152.3, then you would put the following
+into your web browser:
+
+http://3.92.152.3:8080
+
+You should see the GUI.
+
+You must deploy sample.war via the CLI, not the GUI.
+The file is located in the /files/version1/ directory.
+
+Go to the application via a browser and test the application is working.
+The app can be found by going to the server's external IP address with :8080/sample
+appended to the URL.
+
+For example, if the IP address shown for the lab was 3.92.152.3,
+then you would put the following into your web browser:
+
+http://3.92.152.3:8080/sample
+
+You must deploy sample.war via the CLI, not the GUI.
+The file is located in the /files/version2/ directory.
+
+Go to the application via a browser and test the application is working.
+The app can be found by going to the server's external IP address with :8080/sample
+appended to the URL.
+
+For example, if the IP address shown for the lab was 3.92.152.3,
+then you would put the following into your web browser:
+
+http://3.92.152.3:8080/sample
+
+The application will have different text than the original application.
+It shows that it is Version 2.
+
+== Installing Tomcat ==
+
+=== My Notes ===
+Update OS first
+Install java-11-openjdk-devel
+java --version to test if it's working
+
+Download version of tomcat to use
+Download core tar.gz
+Copy link address
+wget URL
+
+Escalate to root
+cd /usr/local
+tar -xvf /home/user/tomcat.tar.gz
+rename folder to tomcat9
+useradd -r tomcat
+chown tomcat:tomcat -R /usr/local/tomcat9
+Create service
+/etc/systemd/system/tomcat.server
+Copy from instructions
+systemctl daemon-reload
+start service
+enable service
+Check it's working with status
+Should be able to load example page
+Add admin user
+cd tomcat9
+edit conf/tomcat-users.xml
+copy from learning objectives
+
+Enable remote login
+edit webapps/manager/META-INF/context.xml
+Copy from instructions
+
+Restart tomcat
+Go back to webpage
+Server Status
+Asks for username and password
+User to manage the server with
+
+=== Linux Academy Learning Objectives ===
+You need to install the java-11-openjdk-devel package:
+
+sudo dnf install java-11-openjdk-devel
+Once it's installed, check the version of Java to ensure it has installed properly
+and is set as the default for the system.
+
+Go to the webpage to get the latest version of Tomcat 9:
+
+https://tomcat.apache.org/download-90.cgi
+
+Go to the Binary Distributions section.
+Under the Core section, right click on the tar.gz, then select Copy Link Location.
+
+Now use wget to download the file:
+
+wget  USE-THE-URL-YOU-COPIED-EARLIER
+
+You need to expand the compressed Tomcat files into the location it will be put.
+
+Change to the root user (or add 'sudo' at the beginning of the commands that follow)
+
+sudo su -
+Change to the location we will use for the tomcat files.
+
+cd /usr/local
+Extract the downloaded file to the current location. Note: replace THE-TOMCAT-FILE-YOU-COPIED-EARLIER with the correct file that was downloaded.
+
+tar -xvf /home/cloud_user/THE-TOMCAT-FILE-YOU-COPIED-COPIED-EARLIER
+Change the name of the Tomcat folder to tomcat9. Note the version you get may be newer than this one. Change the name as needed:
+
+mv apache-tomcat-9.0.31 tomcat9
+Add the tomcat user as a system account:
+
+useradd -r tomcat
+Change the permissions of the tomcat9 folder so the tomcat user can use it:
+
+chown -R tomcat:tomcat /usr/local/tomcat9
+Create the tomcat service. Use an editor (like Vim) to create a file
+/etc/systemd/system/tomcat.service:
+
+vim /etc/systemd/system/tomcat.service
+Add the following contents (and note that if you copy and paste whats below,
+ensure the lines in your file do not have leading spaces):
+
+[Unit]
+Description=Apache Tomcat
+After=syslog.target network.target
+
+[Service]
+Type=forking
+User=tomcat
+Group=tomcat
+
+Environment=CATALINA_PID=/usr/local/tomcat9/temp/tomcat.pid
+Environment=CATALINA_HOME=/usr/local/tomcat9
+Environment=CATALINA_BASE=/usr/local/tomcat9
+
+ExecStart=/usr/local/tomcat9/bin/catalina.sh start
+ExecStop=/usr/local/tomcat9/bin/catalina.sh stop
+
+RestartSec=12
+Restart=always
+[Install]
+WantedBy=multi-user.target
+Next we need to have the system recognize there is a new service.
+We can use the daemon-reload option for systemctl:
+
+systemctl daemon-reload
+Now we can start the service, set it to restart on system boot,
+and check if it's currently running:
+
+systemctl start tomcat.service
+systemctl enable tomcat.service
+systemctl status tomcat.service
+Check that Tomcat works by going to your server's public IP address, on port 8080, in a web browser:
+
+http://YOUR_SERVER_IP:8080
+
+To add an admin user for Tomcat, you need to edit the tomcat-users.xml file:
+
+cd /usr/local/tomcat9/
+vim conf/tomcat-users.xml
+Go to the bottom of the file, and put the following just before the </tomcat-users> end block.
+Don't forget to change the YOURPASSWORDHERE to be your own password, whatever you like:
+
+<role rolename="admin-gui,manager-gui"/>
+<user username="admin" password="YOURPASSWORDHERE" roles="admin-gui,manager-gui"/>
+
+The next step is to allow access to the management web pages from the internet.
+
+Edit the webapps/manager/META-INF/context.xml file:
+
+vim webapps/manager/META-INF/context.xml
+Get to the following line:
+
+allow="127\.\d+\.\d+\.\d+|::1|0:0:0:0:0:0:0:1" />
+Change it to this:
+
+allow="127\.\d+\.\d+\.\d+|::1|0:0:0:0:0:0:0:1 |.*" />
+
+The next task is to restart the Tomcat and ensure it is accessible, then try logging in:
+
+systemctl restart tomcat
+Go to the public IP address of the lab server and test out logging in via the port 8080.
+
+Check that Tomcat works by going to your server's web page on port 8080
+
+http://YOURSERVERIP:8080
+
+Log in with the username and password you completed on Step 5: Add an admin User for Tomcat
+
+You should be able to log in and manage the Tomcat installation
